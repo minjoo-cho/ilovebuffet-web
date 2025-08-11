@@ -55,9 +55,9 @@
                         <img src="T-shirt.png" alt="I Love Buffet T-Shirt" class="w-48 h-48 object-contain">
                     </div>
                     <div class="md:w-1/2 text-center md:text-left mt-8 md:mt-0">
-                        <p class="text-2xl font-bold mb-6">“버핏의 투자를 좋아하시나요?</p>
+                        <p class="text-2xl font-bold mb-6">“LOVE BUFFET?”</p>
                         <div class="flex flex-col space-y-3 max-w-xs mx-auto md:mx-0">
-                            <a href="https://smartstore.naver.com/" target="_blank" class="block text-center bg-gray-800 text-white w-auto inline-block px-4 py-3 text-lg font-bold hover:bg-gray-900 transition-colors">BUY NOW</a>
+                            <a href="https://smartstore.naver.com/comeat9" target="_blank" class="block text-center bg-gray-800 text-white w-auto inline-block px-4 py-3 text-lg font-bold hover:bg-gray-900 transition-colors">BUY NOW</a>
                         </div>
                     </div>
                 </div>
@@ -112,15 +112,18 @@
                 <div class="p-4">
                     <div class="max-w-2xl mx-auto text-left">
                         <h2 class="text-3xl font-bold text-gray-800 mb-2">"버핏이라면 몇 점 줄까?"</h2>
-                        <p class="text-md text-gray-600 mb-6">궁금한 회사명이나 종목 코드를 입력해보세요.</p>
+                        <p class="text-md text-gray-600 mb-6">
+                            관심 있는 종목의 회사명이나 티커를 입력해보세요. <br>
+                            <span class="text-sm font-bold">현재 분석 가능한 종목: AAPL, MSFT, GOOGL, AMZN, TSLA, NVDA, V, JPM, UNH, JNJ</span>
+                        </p>
                         <div class="flex flex-col sm:flex-row gap-2">
-                            <input type="text" id="stock-input-field" class="flex-grow w-full p-4 border-2 border-gray-800 text-lg focus:outline-none" placeholder="예시: 애플, 삼성전자, AAPL, 005930">
-                            <button id="analyze-btn" class="w-full sm:w-auto px-8 py-4 bg-white text-gray-800 border-2 border-gray-800 text-lg font-bold hover:bg-gray-100 transition-colors">점수 확인하기</button>
+                            <input type="text" id="stock-input-field" class="flex-grow w-full p-4 border-2 border-gray-800 text-lg focus:outline-none" placeholder="예: AAPL, 애플, MSFT, 마이크로소프트">
+                            <button id="analyze-btn" class="w-full sm:w-auto px-8 py-4 bg-white text-gray-800 border-2 border-gray-800 text-lg font-bold hover:bg-gray-100 transition-colors">분석하기</button>
                         </div>
                     </div>
                     <div id="loader" class="text-center py-12 hidden">
                         <div class="spinner"></div>
-                        <p class="text-lg mt-4">점수 계산 중이에요</p>
+                        <p class="text-lg mt-4">데이터 분석 중...</p>
                     </div>
                     <div id="error-display" class="hidden mt-8 p-4 bg-red-100 border-2 border-red-400 text-red-700 text-center font-bold"></div>
                     <div id="results-display" class="hidden mt-12">
@@ -145,7 +148,7 @@
                             </table>
                         </div>
                         <div class="bg-gray-100 border-l-4 border-gray-400 text-gray-800 p-6 mt-12">
-                            <h4 class="text-lg font-bold mb-3">버핏이 중요하게 생각하는 3가지</h4>
+                            <h4 class="text-lg font-bold mb-3">💡 투자의 대가는 숫자 너머를 봅니다</h4>
                             <ul class="list-disc list-inside space-y-2">
                                 <li><strong>이해 가능한 사업:</strong> 내가 이 회사가 어떻게 돈을 버는지 10분 안에 설명할 수 있는가?</li>
                                 <li><strong>경제적 해자(Economic Moat):</strong> 경쟁사들이 쉽게 넘볼 수 없는 강력한 경쟁 우위가 있는가? (브랜드, 특허, 네트워크 효과 등)</li>
@@ -203,27 +206,52 @@
         const indicatorGdpEl = document.getElementById('indicator-gdp');
         const marketDataDateDisplay = document.getElementById('market-data-date-display');
         
-        let quotes = [];
-        async function fetchQuotes() {
-            if (!supabase) return;
+        // 한글 종목명을 티커로 변환하기 위한 매핑 객체
+        const tickerMap = {
+            '애플': 'AAPL',
+            '마이크로소프트': 'MSFT',
+            '구글': 'GOOGL',
+            '아마존': 'AMZN',
+            '테슬라': 'TSLA',
+            '엔비디아': 'NVDA',
+            '비자': 'V',
+            '제이피모간체이스': 'JPM',
+            '유나이티드헬스그룹': 'UNH',
+            '존슨앤드존슨': 'JNJ'
+        };
 
-            try {
-                const { data, error } = await supabase
-                    .from('quotes')
-                    .select('*');
-                if (error || !data || data.length === 0) {
-                    console.error("Supabase quotes fetch failed.");
-                    quotes = [];
-                } else {
-                    quotes = data;
-                }
-            } catch (e) {
-                console.error('Supabase fetch failed:', e);
-                quotes = [];
-            }
-            rotateQuotes();
-        }
-        fetchQuotes();
+        const quotes = [
+            { en_quote: "Rule No. 1 is never lose money. Rule No. 2 is never forget Rule No. 1.", ko_quote: "첫째, 절대 돈을 잃지 마라. 둘째, 첫째 규칙을 절대 잊지 마라.", source: "Berkshire Hathaway 주주서한 (1985)" },
+            { en_quote: "The stock market is a device for transferring money from the impatient to the patient.", ko_quote: "주식시장은 조급한 사람의 돈이 인내심 있는 사람에게 옮겨가는 곳이다.", source: "Berkshire Hathaway 주주서한 (1989)" },
+            { en_quote: "Our favorite holding period is forever.", ko_quote: "우리가 가장 좋아하는 주식 보유 기간은 ‘영원히’다.", source: "Berkshire Hathaway 주주서한 (1988)" },
+            { en_quote: "The power of compounding is the eighth wonder of the world.", ko_quote: "복리의 힘은 세상의 여덟 번째 불가사의다.", source: "Columbia Business School 강연 (1999)" },
+            { en_quote: "The more you learn, the more you earn.", ko_quote: "배우면 배울수록 돈도 더 벌 수 있다.", source: "Forbes 인터뷰 (2013)" },
+            { en_quote: "Risk comes from not knowing what you are doing.", ko_quote: "위험은 내가 뭘 하는지 모를 때 생긴다.", source: "Berkshire Hathaway 주주서한 (1994)" },
+            { en_quote: "Be fearful when others are greedy and greedy when others are fearful.", ko_quote: "사람들이 탐욕스러울 때는 조심하고, 두려워할 때는 과감해져라.", source: "Berkshire Hathaway 주주서한 (1986)" },
+            { en_quote: "Price is what you pay, value is what you get.", ko_quote: "가격은 내가 치르는 돈이고, 가치는 내가 얻는 것이다.", source: "Berkshire Hathaway 주주서한 (2008)" },
+            { en_quote: "Do not save what is left after spending, but spend what is left after saving.", ko_quote: "쓰고 남은 돈을 저축하지 말고, 저축하고 남은 돈을 써라.", source: "인도 비즈니스 스쿨 강연 (2011)" },
+            { en_quote: "The three most important words in investing: Margin of safety.", ko_quote: "투자에서 가장 중요한 세 단어는 ‘안전 마진’이다.", source: "Benjamin Graham 언급, 주주서한 (1992)" },
+            { en_quote: "It’s far better to buy a wonderful company at a fair price than a fair company at a wonderful price.", ko_quote: "평범한 회사를 싸게 사는 것보다, 훌륭한 회사를 적정가에 사는 게 낫다.", source: "주주서한 (1989)" },
+            { en_quote: "Time is the friend of the wonderful business, the enemy of the mediocre.", ko_quote: "시간은 좋은 기업의 편이지만, 평범한 기업에는 독이 된다.", source: "주주서한 (1989)" },
+            { en_quote: "Paying too much for a great company is still a bad deal. Paying little for a bad company won't make it a good one.", ko_quote: "좋은 기업이라도 너무 비싸게 사면 나쁜 거래다. 싸게 산다고 좋은 거래가 되는 건 아니다.", source: "CNBC 인터뷰 (2017)" },
+            { en_quote: "Only buy something that you'd be perfectly happy to hold if the market shut down for ten years.", ko_quote: "시장이 10년 닫혀도 보유할 만큼 좋은 것만 사라.", source: "Forbes 인터뷰 (1996)" },
+            { en_quote: "Diversification is protection against ignorance. It makes little sense if you know what you are doing.", ko_quote: "분산투자는 무지에 대한 방어다. 내가 뭘 아는 사람이라면 필요 없다.", source: "Forbes 인터뷰 (1996)" },
+            { en_quote: "Life is like a snowball, all you need is wet snow and a really long hill.", ko_quote: "인생은 눈덩이와 같다. 필요한 건 젖은 눈과 긴 언덕뿐이다.", source: "Fortune 인터뷰 (2012)" },
+            { en_quote: "The most important thing to do if you find yourself in a hole is to stop digging.", ko_quote: "구덩이에 빠졌다면, 우선 삽질을 멈추는 게 제일 중요하다.", source: "Omaha World-Herald 인터뷰 (2004)" },
+            { en_quote: "Don’t pass up something that’s attractive today because you think you will find something better tomorrow.", ko_quote: "내일 더 좋은 게 있을 거라며 오늘의 좋은 기회를 버리지 마라.", source: "주주서한 (2011)" },
+            { en_quote: "There’s never just one cockroach in the kitchen.", ko_quote: "부엌에 바퀴벌레가 한 마리만 있는 법은 없다.", source: "Fortune 인터뷰 (1989)" },
+            { en_quote: "When it rains gold, put out the bucket, not the thimble.", ko_quote: "금이 쏟아질 땐 양동이를 들고 나가라.", source: "주주서한 (2016)" },
+            { en_quote: "Anything can happen anytime in markets. No one, not even Charlie or I, can predict chaos.", ko_quote: "시장에서는 언제든 무엇이든 일어날 수 있다. 찰리와 나도 혼란이 언제 올지는 모른다.", source: "주주서한 (2014)" },
+            { en_quote: "It takes 20 years to build a reputation and five minutes to ruin it.", ko_quote: "명성을 쌓는 데는 20년이 걸리지만, 무너뜨리는 데는 5분이면 충분하다.", source: "주주서한 (1991)" },
+            { en_quote: "Lose money for the firm, and I will be understanding. Lose a shred of reputation for the firm, and I will be ruthless.", ko_quote: "회사의 돈을 잃는 건 이해하지만, 회사의 명성을 잃게 하면 무자비하게 대응할 것이다.", source: "주주서한 (1989)" },
+            { en_quote: "Know your circle of competence, and stick within it.", ko_quote: "자신의 역량이 미치는 범위를 알고 그 안에 머물러라.", source: "주주서한 (1996)" },
+            { en_quote: "You should never test the depth of the water with both feet.", ko_quote: "물 깊이를 양발로 재보아서는 안 된다.", source: "Omaha 인터뷰 (1994)" },
+            { en_quote: "Somebody’s sitting in the shade today because someone planted a tree a long time ago.", ko_quote: "오늘 그늘에 앉아 있는 사람은 오래전에 누군가 나무를 심었기 때문이다.", source: "주주서한 (2011)" },
+            { en_quote: "Honesty is a very expensive gift. Don’t expect it from cheap people.", ko_quote: "정직은 값비싼 선물이다. 값싼 사람에게서 그것을 기대하지 마라.", source: "Omaha World-Herald 인터뷰 (2008)" },
+            { en_quote: "Look for 3 things in a person: intelligence, energy, and integrity. If they lack integrity, the other two don't matter.", ko_quote: "사람을 볼 때는 지능, 열정, 그리고 진실성을 보라. 진실성이 없다면 나머지 두 가지는 아무 소용 없다.", source: "Forbes 인터뷰 (2013)" },
+            { en_quote: "It’s better to hang out with people who are better than you.", ko_quote: "나보다 나은 사람들과 어울려라. 그러면 나도 그 방향으로 변하게 된다.", source: "Columbia University 강연 (2009)" },
+            { en_quote: "I insist on a lot of time being spent, almost every day, to just sit and think.", ko_quote: "나는 거의 매일, 앉아서 생각하는 데 많은 시간을 써야 한다고 믿는다.", source: "Forbes 인터뷰 (2013)" }
+        ];
 
         let currentQuoteIndex = 0;
         function rotateQuotes() {
@@ -235,124 +263,18 @@
             quoteTextEl.style.opacity = 0;
             quoteAuthorEl.style.opacity = 0;
             setTimeout(() => {
-                currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
-                quoteTextEl.textContent = `“${quotes[currentQuoteIndex].en_quote}”`;
-                quoteAuthorEl.textContent = quotes[currentQuoteIndex].author;
+                const currentQuote = quotes[currentQuoteIndex];
+                quoteTextEl.innerHTML = `
+                    <p class="text-xl md:text-2xl font-bold">${currentQuote.en_quote}</p>
+                    <p class="mt-2 text-md md:text-xl text-gray-700">${currentQuote.ko_quote}</p>
+                `;
+                quoteAuthorEl.textContent = `— ${currentQuote.source}`;
                 quoteTextEl.style.opacity = 1;
                 quoteAuthorEl.style.opacity = 1;
+                currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
             }, 500);
         }
         setInterval(rotateQuotes, 5000);
-
-        async function fetchMarketData() {
-            if (!supabase) return;
-
-            try {
-                const { data, error } = await supabase
-                    .from('market_data')
-                    .select('*')
-                    .order('data_date', { ascending: false })
-                    .limit(1);
-
-                const marketData = data && data.length > 0 ? data[0] : null;
-
-                if (!marketData) {
-                    console.error("Supabase market data fetch failed.");
-                    marketScoreMessageEl.textContent = "시장 데이터를 불러올 수 없습니다.";
-                    return;
-                }
-                
-                marketScoreEl.textContent = marketData.total_score;
-                marketScoreMessageEl.textContent = marketData.total_message;
-                indicatorBuffettEl.textContent = `${marketData.buffett_index}%`;
-                indicatorInterestEl.textContent = `${marketData.fed_interest_rate_value}점`;
-                indicatorInflationEl.textContent = `${marketData.us_cpi_value}점`;
-                indicatorGdpEl.textContent = `${marketData.us_gdp_growth_value}점`;
-                marketDataDateDisplay.textContent = `${marketData.data_date} 기준`;
-            } catch (e) {
-                console.error('Supabase market data fetch failed:', e);
-                marketScoreMessageEl.textContent = "시장 데이터를 불러올 수 없습니다.";
-            }
-        }
-        fetchMarketData();
-
-        async function handleAnalysis() {
-            if (!supabase) {
-                displayError('데이터베이스 연결 실패. Supabase URL과 키를 확인해주세요.');
-                return;
-            }
-            const stockInput = stockInputField.value.trim().toUpperCase();
-            if (!stockInput) {
-                displayError('종목명이나 티커를 입력해주세요.');
-                return;
-            }
-            resultsDisplay.classList.add('hidden');
-            errorDisplay.classList.add('hidden');
-            loader.classList.remove('hidden');
-
-            let stockData = null;
-            try {
-                const { data, error } = await supabase
-                    .from('stocks_financials')
-                    .select(`*, stock_metrics (*)`)
-                    .or(`ticker.eq.${stockInput}, company_name.ilike.%${stockInput}%`)
-                    .order('report_date', { ascending: false })
-                    .limit(1);
-
-                if (data && data.length > 0) {
-                    stockData = data[0];
-                }
-            } catch (e) {
-                console.error('Supabase fetch failed:', e);
-            }
-
-            setTimeout(() => {
-                loader.classList.add('hidden');
-                if (stockData) {
-                    displayResults(stockData);
-                } else {
-                    displayError('아쉽지만, 이 종목은 아직 분석할 수 없어요. 현재 10개의 종목만을 지원합니다.');
-                }
-            }, 1500);
-        }
-
-        function displayResults(data) {
-            resultStockName.textContent = `${data.company_name} (${data.ticker})`;
-            resultScore.textContent = data.total_score;
-            resultScore.parentElement.className = `text-8xl font-extrabold mb-2 ${data.total_score >= 70 ? 'text-red-600' : data.total_score >= 50 ? 'text-red-600' : 'text-red-600'}`;
-            resultMessage.textContent = data.total_message;
-
-            metricsTableBody.innerHTML = '';
-            
-            if (data.stock_metrics && data.stock_metrics.length > 0) {
-                data.stock_metrics.forEach(metric => {
-                    const scoreColorClass = metric.score > 15 ? 'text-red-600' : metric.score > 10 ? 'text-red-600' : 'text-red-600';
-                    const tableHtml = `
-                        <tr class="border-b border-gray-800 last:border-b-0 hover:bg-gray-100">
-                            <td class="p-4 font-bold">${metric.name}</td>
-                            <td class="p-4 text-gray-700">${metric.value}</td>
-                            <td class="p-4 text-center font-bold ${scoreColorClass}">${metric.score}</td>
-                            <td class="p-4 text-gray-700 text-sm">${metric.message}</td>
-                        </tr>
-                    `;
-                    metricsTableBody.innerHTML += tableHtml;
-                });
-            }
-
-            resultsDisplay.classList.remove('hidden');
-        }
-        
-        function displayError(message) {
-            errorDisplay.textContent = message;
-            errorDisplay.classList.remove('hidden');
-        }
-
-        analyzeBtn.addEventListener('click', handleAnalysis);
-        stockInputField.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                handleAnalysis();
-            }
-        });
     });
 </script>
 </body>
