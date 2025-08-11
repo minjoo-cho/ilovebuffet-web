@@ -51,13 +51,18 @@
             <!-- 제품 정보 섹션 -->
             <section class="my-12">
                 <div class="flex flex-col md:flex-row md:items-center md:space-x-12">
-                    <div class="md:w-1/2 flex justify-center border-2 border-gray-800 p-4">
+                    <div class="md:w-1/2 flex justify-center p-4">
                         <img src="T-shirt.png" alt="I Love Buffet T-Shirt" class="w-48 h-48 object-contain">
                     </div>
                     <div class="md:w-1/2 text-center md:text-left mt-8 md:mt-0">
                         <p class="text-2xl font-bold mb-6">“LOVE BUFFET?”</p>
-                        <div class="flex flex-col space-y-3 max-w-xs mx-auto md:mx-0">
-                            <a href="https://smartstore.naver.com/comeat9" target="_blank" class="block text-center bg-gray-800 text-white w-auto inline-block px-4 py-3 text-lg font-bold hover:bg-gray-900 transition-colors">BUY NOW</a>
+                        <div class="flex flex-col space-y-3 max-w-[160px] mx-auto md:mx-0">
+                            <div class="relative inline-block w-full">
+                                <a href="https://smartstore.naver.com/comeat9" target="_blank" class="relative z-10 block text-center text-white px-6 py-3 text-lg font-bold">BUY NOW</a>
+                                <svg class="absolute inset-0 z-0 w-full h-full" viewBox="0 0 100 36" preserveAspectRatio="none">
+                                    <path d="M0 5 L10 0 L90 0 L100 5 L100 31 L90 36 L10 36 L0 31 Z" fill="#dc2626" stroke="#000000" stroke-width="2"/>
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -265,8 +270,8 @@
             setTimeout(() => {
                 const currentQuote = quotes[currentQuoteIndex];
                 quoteTextEl.innerHTML = `
-                    <p class="text-xl md:text-2xl font-bold">${currentQuote.en_quote}</p>
-                    <p class="mt-2 text-md md:text-xl text-gray-700">${currentQuote.ko_quote}</p>
+                    <p class="text-xl md:text-2xl font-bold">“${currentQuote.en_quote}”</p>
+                    <p class="mt-2 text-md md:text-xl text-gray-700">“${currentQuote.ko_quote}”</p>
                 `;
                 quoteAuthorEl.textContent = `— ${currentQuote.source}`;
                 quoteTextEl.style.opacity = 1;
@@ -275,6 +280,124 @@
             }, 500);
         }
         setInterval(rotateQuotes, 5000);
+
+        async function fetchMarketData() {
+            if (!supabase) return;
+
+            try {
+                const { data, error } = await supabase
+                    .from('market_data')
+                    .select('*')
+                    .order('data_date', { ascending: false })
+                    .limit(1);
+
+                const marketData = data && data.length > 0 ? data[0] : null;
+
+                if (!marketData) {
+                    console.error("Supabase market data fetch failed.");
+                    marketScoreMessageEl.textContent = "시장 데이터를 불러올 수 없습니다.";
+                    return;
+                }
+                
+                marketScoreEl.textContent = marketData.total_score;
+                marketScoreMessageEl.textContent = marketData.total_message;
+                indicatorBuffettEl.textContent = `${marketData.buffett_index}%`;
+                indicatorInterestEl.textContent = `${marketData.fed_interest_rate_value}점`;
+                indicatorInflationEl.textContent = `${marketData.us_cpi_value}점`;
+                indicatorGdpEl.textContent = `${marketData.us_gdp_growth_value}점`;
+                marketDataDateDisplay.textContent = `${marketData.data_date} 기준`;
+            } catch (e) {
+                console.error('Supabase market data fetch failed:', e);
+                marketScoreMessageEl.textContent = "시장 데이터를 불러올 수 없습니다.";
+            }
+        }
+        fetchMarketData();
+
+        async function handleAnalysis() {
+            if (!supabase) {
+                displayError('데이터베이스 연결 실패. Supabase URL과 키를 확인해주세요.');
+                return;
+            }
+            const stockInput = stockInputField.value.trim().toUpperCase();
+            if (!stockInput) {
+                displayError('종목명이나 티커를 입력해주세요.');
+                return;
+            }
+            resultsDisplay.classList.add('hidden');
+            errorDisplay.classList.add('hidden');
+            loader.classList.remove('hidden');
+
+            let stockData = null;
+            let queryTicker = stockInput;
+
+            // 한글 종목명을 티커로 변환하기 위한 매핑 객체
+            const lowerCaseInput = stockInput.toLowerCase();
+            if (tickerMap[lowerCaseInput]) {
+                queryTicker = tickerMap[lowerCaseInput];
+            }
+
+            try {
+                const { data, error } = await supabase
+                    .from('stocks_financials')
+                    .select(`*, stock_metrics (*)`)
+                    .or(`ticker.eq.${queryTicker}, company_name.ilike.%${queryTicker}%`)
+                    .order('report_date', { ascending: false })
+                    .limit(1);
+
+                if (data && data.length > 0) {
+                    stockData = data[0];
+                }
+            } catch (e) {
+                console.error('Supabase fetch failed:', e);
+            }
+
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                if (stockData) {
+                    displayResults(stockData);
+                } else {
+                    displayError('해당 종목에 대한 데이터가 없습니다. AAPL 또는 MSFT를 입력해보세요.');
+                }
+            }, 1500);
+        }
+
+        function displayResults(data) {
+            resultStockName.textContent = `${data.company_name} (${data.ticker})`;
+            resultScore.textContent = data.total_score;
+            resultScore.parentElement.className = `text-8xl font-extrabold mb-2 ${data.total_score >= 70 ? 'text-red-600' : data.total_score >= 50 ? 'text-red-600' : 'text-red-600'}`;
+            resultMessage.textContent = data.total_message;
+
+            metricsTableBody.innerHTML = '';
+            
+            if (data.stock_metrics && data.stock_metrics.length > 0) {
+                data.stock_metrics.forEach(metric => {
+                    const scoreColorClass = metric.score > 15 ? 'text-red-600' : metric.score > 10 ? 'text-red-600' : 'text-red-600';
+                    const tableHtml = `
+                        <tr class="border-b border-gray-800 last:border-b-0 hover:bg-gray-100">
+                            <td class="p-4 font-bold">${metric.name}</td>
+                            <td class="p-4 text-gray-700">${metric.value}</td>
+                            <td class="p-4 text-center font-bold ${scoreColorClass}">${metric.score}</td>
+                            <td class="p-4 text-gray-700 text-sm">${metric.message}</td>
+                        </tr>
+                    `;
+                    metricsTableBody.innerHTML += tableHtml;
+                });
+            }
+
+            resultsDisplay.classList.remove('hidden');
+        }
+        
+        function displayError(message) {
+            errorDisplay.textContent = message;
+            errorDisplay.classList.remove('hidden');
+        }
+
+        analyzeBtn.addEventListener('click', handleAnalysis);
+        stockInputField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                handleAnalysis();
+            }
+        });
     });
 </script>
 </body>
