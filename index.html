@@ -13,11 +13,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
+	@keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-5px); }
+        40%, 80% { transform: translateX(5px); }
+    }
+    
+    .animate-shake:hover {
+        animation: shake 0.5s infinite;
+    }
+	@font-face {
+            font-family: 'YoonChildfundkoreaMinGuk';
+            src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408@1.0/YoonChildfundkoreaMinGuk.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000;
+            background-image: url('file:///Users/minoocho/I%20Love%20Buffet/omaha.png');
+	    background-size: auto 230vh;
             color: #fff; /* 모든 텍스트를 흰색으로 변경 */
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.6); /* 텍스트 가독성 향상을 위해 그림자 추가 */
+          
         }
         /* 로딩 스피너 애니메이션 */
         .spinner {
@@ -36,6 +52,9 @@
         .center-content {
             text-align: center;
         }
+	#quote-section {
+            font-family: 'YoonChildfundkoreaMinGuk';
+        }
     </style>
 </head>
 <body class="text-white bg-black">
@@ -45,19 +64,19 @@
         <!-- 헤더 섹션 -->
         <header class="center-content mb-8">
             <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-2">Ask Guru</h1>
-            <p class="text-lg text-white">투자 대가의 인사이트를 갈무리하여 투자자인 여러분들이 쉽게 활용하실 수 있게 도와드립니다.</p>
-            <p class="text-sm text-gray-300 mt-2">현재는 버핏의 인사이트만을 지원합니다. 주주서한, 각종 인터뷰에서 언급한 이야기에서 힌트를 얻었습니다.</p>
             <div class="mt-4">
                 <a href="https://smartstore.naver.com/comeat9/products/12244809201" target="_blank" class="inline-block">
-                    <img src="https://googleusercontent.com/file_content/ChatGPT Image Aug 16, 2025, 01_32_50 PM.jpg-9d4e30ca-c675-41bc-820c-86e56482cdf9" alt="I Love Buffet T-Shirt" class="w-24 mx-auto">
+                    <img src="file:///Users/minoocho/I%20Love%20Buffet/T-shirt.png" alt="I Love Buffet T-Shirt" class="w-10 mx-auto inline-block animate-shake">
                 </a>
             </div>
+		<p class="text-sm text-gray-300 mt-2">투자 대가의 인사이트를 갈무리하여 쉽게 활용하실 수 있게 도와드립니다.</p>
+            <p class="text-sm text-gray-300 mt-2">현재는 버핏의 인사이트만을 지원합니다. 주주서한, 각종 인터뷰에서 언급한 이야기에서 힌트를 얻었습니다.</p>
         </header>
 
         <main class="space-y-8">
             <!-- 주식 분석기 섹션 (가장 먼저 위치) -->
             <section id="stock-evaluation-section" class="p-6 md:p-8 center-content">
-                <h2 class="text-2xl font-bold mb-4 text-white">가치투자 프레임으로 종목을 평가해보세요</h2>
+                <h2 class="text-2xl text-white">가치투자 프레임으로 종목을 평가해보세요</h2>
                 <p class="text-gray-300 mb-6 text-sm md:text-base">
                     현재 아래의 10개 종목만 지원합니다.
                 </p>
@@ -116,7 +135,7 @@
 
             <!-- 시장 지표 섹션 (두 번째 위치) -->
             <section id="market-score-section" class="p-6 md:p-8 center-content">
-                <h2 class="text-2xl font-bold mb-4 text-white">가치투자 프레임으로 시장을 읽어보세요</h2>
+                <h2 class="text-2xl text-white">가치투자 프레임으로 시장을 읽어보세요</h2>
                 <div id="market-main-message-container" class="text-center mb-6 font-bold text-lg">
                     <p id="market-score-message"></p>
                     <p id="market-data-date-display" class="text-sm mt-2"></p>
